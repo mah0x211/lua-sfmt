@@ -1,0 +1,3 @@
+[submodule "deps/SFMT"]
+	path = deps/SFMT
+	url = https://github.com/MersenneTwister-Lab/SFMT.git
