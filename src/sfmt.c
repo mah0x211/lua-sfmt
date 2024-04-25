@@ -29,11 +29,11 @@
 static int DEFAULT_SFMT_REF = LUA_NOREF;
 
 #define genrand_res(L, bit)                                                    \
- do {                                                                          \
-  sfmt_t *s = luaL_checkudata(L, 1, MODULE_MT);                                \
-  double v  = sfmt_genrand_res##bit(s);                                        \
-  lua_pushnumber((L), v);                                                      \
- } while (0)
+    do {                                                                       \
+        sfmt_t *s = luaL_checkudata(L, 1, MODULE_MT);                          \
+        double v  = sfmt_genrand_res##bit(s);                                  \
+        lua_pushnumber((L), v);                                                \
+    } while (0)
 
 static int res53mix_lua(lua_State *L)
 {
@@ -48,11 +48,11 @@ static int res53_lua(lua_State *L)
 }
 
 #define default_genrand_res(L, bit)                                            \
- do {                                                                          \
-  lua_settop((L), 0);                                                          \
-  lauxh_pushref((L), DEFAULT_SFMT_REF);                                        \
-  genrand_res((L), bit);                                                       \
- } while (0)
+    do {                                                                       \
+        lua_settop((L), 0);                                                    \
+        lauxh_pushref((L), DEFAULT_SFMT_REF);                                  \
+        genrand_res((L), bit);                                                 \
+    } while (0)
 
 static int default_res53mix_lua(lua_State *L)
 {
@@ -70,11 +70,11 @@ static int default_res53_lua(lua_State *L)
 #undef genrand_res
 
 #define genrand_real(L, bit)                                                   \
- do {                                                                          \
-  sfmt_t *s = luaL_checkudata(L, 1, MODULE_MT);                                \
-  double v  = sfmt_genrand_real##bit(s);                                       \
-  lua_pushnumber((L), v);                                                      \
- } while (0)
+    do {                                                                       \
+        sfmt_t *s = luaL_checkudata(L, 1, MODULE_MT);                          \
+        double v  = sfmt_genrand_real##bit(s);                                 \
+        lua_pushnumber((L), v);                                                \
+    } while (0)
 
 static int real3_lua(lua_State *L)
 {
@@ -95,11 +95,11 @@ static int real1_lua(lua_State *L)
 }
 
 #define default_genrand_real(L, bit)                                           \
- do {                                                                          \
-  lua_settop((L), 0);                                                          \
-  lauxh_pushref((L), DEFAULT_SFMT_REF);                                        \
-  genrand_real((L), bit);                                                      \
- } while (0)
+    do {                                                                       \
+        lua_settop((L), 0);                                                    \
+        lauxh_pushref((L), DEFAULT_SFMT_REF);                                  \
+        genrand_real((L), bit);                                                \
+    } while (0)
 
 static int default_real3_lua(lua_State *L)
 {
@@ -123,11 +123,11 @@ static int default_real1_lua(lua_State *L)
 #undef genrand_real
 
 #define genrand_uint(L, bit)                                                   \
- do {                                                                          \
-  sfmt_t *s       = luaL_checkudata(L, 1, MODULE_MT);                          \
-  uint##bit##_t v = sfmt_genrand_uint##bit(s);                                 \
-  lua_pushinteger((L), v);                                                     \
- } while (0)
+    do {                                                                       \
+        sfmt_t *s       = luaL_checkudata(L, 1, MODULE_MT);                    \
+        uint##bit##_t v = sfmt_genrand_uint##bit(s);                           \
+        lua_pushinteger((L), v);                                               \
+    } while (0)
 
 static int rand64_lua(lua_State *L)
 {
@@ -142,11 +142,11 @@ static int rand32_lua(lua_State *L)
 }
 
 #define default_genrand_uint(L, bit)                                           \
- do {                                                                          \
-  lua_settop((L), 0);                                                          \
-  lauxh_pushref((L), DEFAULT_SFMT_REF);                                        \
-  genrand_uint((L), bit);                                                      \
- } while (0)
+    do {                                                                       \
+        lua_settop((L), 0);                                                    \
+        lauxh_pushref((L), DEFAULT_SFMT_REF);                                  \
+        genrand_uint((L), bit);                                                \
+    } while (0)
 
 static int default_rand64_lua(lua_State *L)
 {
