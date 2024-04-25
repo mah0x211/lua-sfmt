@@ -25,9 +25,7 @@ $(TARGET): $(OBJS)
 
 install:
 	$(INSTALL) $(TARGET) $(INST_LIBDIR)
-	rm -f ./src/*.o
-	rm -f ./*.so
+	rm -f ./src/*.o ./*.so
 
 clean:
-	rm -f ./src/*.o
-	rm -f ./*.so
+	rm -f ./src/*.o ./*.so

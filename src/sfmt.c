@@ -176,8 +176,11 @@ static inline void init_sfmt(lua_State *L)
 
     case 1:
         // set default seeds
-        srandom((unsigned int)time(NULL));
-        srandom((unsigned int)random());
+        {
+            struct timespec t = {0};
+            clock_gettime(CLOCK_MONOTONIC, &t);
+            srand(((uint64_t)t.tv_sec * 1000000000ULL + t.tv_nsec));
+        }
         for (int i = 0; i < 4; i++) {
             lua_pushinteger(L, random());
         }
