@@ -1,12 +1,9 @@
 local tostring = tostring
 local testcase = require('testcase')
+local assert = require('assert')
 local sfmt = require('sfmt')
 
-local TSET_SEED = os.time()
-
-function testcase.before_each()
-    sfmt.init(TSET_SEED)
-end
+local TEST_SEED = os.time()
 
 function testcase.idstring()
     -- test that return version
@@ -29,40 +26,101 @@ function testcase.init()
     assert.rawequal(v, s)
 end
 
-function testcase.random()
-    -- test that rand* funcs
-    for fn, exp in pairs({
-        -- test that rand32 func generate 32bit random number
-        rand32 = '^%d+$',
-        -- test that rand64 func generate 64bit random number
-        rand64 = '^%-?[%de+.]+$',
-    }) do
-        -- test that generate <N>bit random number
-        sfmt.init(TSET_SEED)
-        local v = sfmt[fn]()
-        assert.match(tostring(v), exp, false)
-
-        -- test that fn method returns the same value as sfmt[fn] func
-        local s = assert(sfmt.new(TSET_SEED))
-        assert.equal(s[fn](s), v)
+function testcase.rand32()
+    -- test that generate 32bit random number
+    for _ = 1, 100 do
+        local v = sfmt.rand32()
+        assert(0 <= v and v <= 0xFFFFFFFF, v)
     end
 
-    -- test that real* and res* funcs
-    for _, fn in ipairs({
-        'real1',
-        'real2',
-        'real3',
-        'res53',
-        'res53mix',
-    }) do
-        sfmt.init(TSET_SEED)
-        -- test that real<N> func generate random number on [0,1]
-        local v = sfmt[fn]()
-        assert.less(v, 1)
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.rand32()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:rand32(), v)
+end
 
-        -- test that fn method returns the same value as sfmt[fn] func
-        local s = assert(sfmt.new(TSET_SEED))
-        assert.equal(s[fn](s), v)
+function testcase.rand64()
+    -- test that generate 64bit random number
+    for _ = 1, 100 do
+        local v = sfmt.rand64()
+        assert(0 <= v and v <= 0x7FFFFFFFFFFFFFFF, v)
     end
+
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.rand64()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:rand64(), v)
+end
+
+function testcase.real1()
+    -- test that generate random number on [0,1] (0 <= v <= 1)
+    for _ = 1, 100 do
+        local v = sfmt.real1()
+        assert(0 <= v and v <= 1)
+    end
+
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.real1()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:real1(), v)
+end
+
+function testcase.real2()
+    -- test that generate random number on [0,1) (0 <= v < 1)
+    for _ = 1, 100 do
+        local v = sfmt.real2()
+        assert(0 <= v and v < 1)
+    end
+
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.real2()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:real2(), v)
+end
+
+function testcase.real3()
+    -- test that generate random number on (0,1) (0 < v < 1)
+    for _ = 1, 100 do
+        local v = sfmt.real3()
+        assert(0 < v and v < 1)
+    end
+
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.real3()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:real3(), v)
+end
+
+function testcase.res53()
+    -- test that generate random number on [0,1) (0 <= v < 1) with 53-bit resolution
+    for _ = 1, 100 do
+        local v = sfmt.res53()
+        assert(0 <= v and v < 1)
+    end
+
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.res53()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:res53(), v)
+end
+
+function testcase.res53mix()
+    -- test that generate random number on [0,1) (0 <= v < 1) with 53-bit resolution using two 32-bit integers
+    for _ = 1, 100 do
+        local v = sfmt.res53mix()
+        assert(0 <= v and v < 1)
+    end
+
+    -- test that method returns the same value
+    sfmt.init(TEST_SEED)
+    local v = sfmt.res53mix()
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:res53mix(), v)
 end
 
