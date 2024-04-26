@@ -38,6 +38,18 @@ function testcase.rand32()
     local v = sfmt.rand32()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:rand32(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.rand32(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.rand32(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:rand32(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 
 function testcase.rand64()
@@ -52,6 +64,18 @@ function testcase.rand64()
     local v = sfmt.rand64()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:rand64(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.rand64(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.rand64(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:rand64(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 
 function testcase.real1()
@@ -66,6 +90,18 @@ function testcase.real1()
     local v = sfmt.real1()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:real1(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.real1(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.real1(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:real1(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 
 function testcase.real2()
@@ -80,6 +116,18 @@ function testcase.real2()
     local v = sfmt.real2()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:real2(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.real2(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.real2(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:real2(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 
 function testcase.real3()
@@ -94,6 +142,18 @@ function testcase.real3()
     local v = sfmt.real3()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:real3(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.real3(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.real3(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:real3(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 
 function testcase.res53()
@@ -108,6 +168,18 @@ function testcase.res53()
     local v = sfmt.res53()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:res53(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.res53(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.res53(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:res53(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 
 function testcase.res53mix()
@@ -122,5 +194,17 @@ function testcase.res53mix()
     local v = sfmt.res53mix()
     local s = assert(sfmt.new(TEST_SEED))
     assert.equal(s:res53mix(), v)
+
+    -- test that generate random number on [5,50]
+    for _ = 1, 100 do
+        v = sfmt.res53mix(20)
+        assert(20 >= v and v >= 0)
+
+        v = sfmt.res53mix(20, 5)
+        assert(20 >= v and v >= 5)
+
+        v = s:res53mix(20, 5)
+        assert(20 >= v and v >= 5)
+    end
 end
 

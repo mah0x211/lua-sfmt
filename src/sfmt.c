@@ -21,15 +21,17 @@
  */
 
 #include "SFMT.h"
-#include <lauxhlib.h>
 #include <time.h>
+// lua
+#include <lauxhlib.h>
 
 #define MODULE_MT "sfmt"
 
 static int DEFAULT_SFMT_REF = LUA_NOREF;
 
 typedef enum {
-    RANDBIT_UINT32 = 1,
+    RANDBIT_ZERO = 0,
+    RANDBIT_UINT32,
     RANDBIT_UINT64,
     RANDBIT_REAL1,
     RANDBIT_REAL2,
@@ -45,7 +47,7 @@ typedef struct {
 
 static inline lua_sfmt_t *checksfmt(lua_State *L, randbit_t bit)
 {
-    lua_sfmt_t *s = luaL_checkudata(L, 1, MODULE_MT);
+    lua_sfmt_t *s = (lua_sfmt_t *)luaL_checkudata(L, 1, MODULE_MT);
 
     if (s->bit == 0) {
         s->bit = bit;
@@ -57,10 +59,27 @@ static inline lua_sfmt_t *checksfmt(lua_State *L, randbit_t bit)
     return s;
 }
 
+static const lua_Number LUA_SFMT_NUMMAX =
+    std::numeric_limits<lua_Number>::max();
+
+static inline lua_Number dbl2num(double v)
+{
+    if (v > (double)LUA_SFMT_NUMMAX) {
+        return LUA_SFMT_NUMMAX;
+    }
+    return (lua_Number)v;
+}
+
 #define genrand_res(L, bit)                                                    \
     do {                                                                       \
-        lua_sfmt_t *s = checksfmt(L, RANDBIT_RES##bit);                        \
-        double v      = sfmt_genrand_res##bit(&s->sfmt);                       \
+        lua_sfmt_t *s  = checksfmt(L, RANDBIT_RES##bit);                       \
+        lua_Number max = lauxh_optunsigned(L, 2, 1);                           \
+        lua_Number min = lauxh_optunsigned(L, 3, 0);                           \
+        double v       = 0;                                                    \
+        lauxh_argcheck(L, min <= max, 2,                                       \
+                       "min must be less than or equal to max");               \
+        v = sfmt_genrand_res##bit(&s->sfmt);                                   \
+        v = min + v * (max - min);                                             \
         lua_pushnumber((L), v);                                                \
     } while (0)
 
@@ -78,8 +97,8 @@ static int res53_lua(lua_State *L)
 
 #define default_genrand_res(L, bit)                                            \
     do {                                                                       \
-        lua_settop((L), 0);                                                    \
         lauxh_pushref((L), DEFAULT_SFMT_REF);                                  \
+        lua_insert(L, 1);                                                      \
         genrand_res((L), bit);                                                 \
     } while (0)
 
@@ -100,9 +119,15 @@ static int default_res53_lua(lua_State *L)
 
 #define genrand_real(L, bit)                                                   \
     do {                                                                       \
-        lua_sfmt_t *s = checksfmt(L, RANDBIT_REAL##bit);                       \
-        double v      = sfmt_genrand_real##bit(&s->sfmt);                      \
-        lua_pushnumber((L), v);                                                \
+        lua_sfmt_t *s  = checksfmt(L, RANDBIT_REAL##bit);                      \
+        lua_Number max = lauxh_optunsigned(L, 2, 1);                           \
+        lua_Number min = lauxh_optunsigned(L, 3, 0);                           \
+        double v       = 0;                                                    \
+        lauxh_argcheck(L, min <= max, 2,                                       \
+                       "min must be less than or equal to max");               \
+        v = sfmt_genrand_real##bit(&s->sfmt);                                  \
+        v = min + v * (max - min);                                             \
+        lua_pushnumber((L), dbl2num(v));                                       \
     } while (0)
 
 static int real3_lua(lua_State *L)
@@ -125,8 +150,8 @@ static int real1_lua(lua_State *L)
 
 #define default_genrand_real(L, bit)                                           \
     do {                                                                       \
-        lua_settop((L), 0);                                                    \
         lauxh_pushref((L), DEFAULT_SFMT_REF);                                  \
+        lua_insert(L, 1);                                                      \
         genrand_real((L), bit);                                                \
     } while (0)
 
@@ -151,21 +176,28 @@ static int default_real1_lua(lua_State *L)
 #undef default_genrand_real
 #undef genrand_real
 
+static const lua_Integer LUA_SFMT_INTMAX =
+    std::numeric_limits<lua_Integer>::max();
+
 static inline lua_Integer uint2int(uintmax_t v)
 {
-    static const uintmax_t maxv =
-        (1ULL << (sizeof(lua_Integer) * CHAR_BIT - 1)) - 1;
-    if (v > maxv) {
-        return (lua_Integer)maxv;
+    if (v > (uintmax_t)LUA_SFMT_INTMAX) {
+        return LUA_SFMT_INTMAX;
     }
     return (lua_Integer)v;
 }
 
-#define genrand_uint(L, bit)                                                   \
-    do {                                                                       \
-        lua_sfmt_t *s   = checksfmt(L, RANDBIT_UINT##bit);                     \
-        uint##bit##_t v = sfmt_genrand_uint##bit(&s->sfmt);                    \
-        lua_pushinteger((L), uint2int(v));                                     \
+#define genrand_uint(L, bit)                                                    \
+    do {                                                                        \
+        lua_sfmt_t *s   = checksfmt(L, RANDBIT_UINT##bit);                      \
+        uintmax_t max   = (uintmax_t)lauxh_optuint##bit(L, 2, LUA_SFMT_INTMAX); \
+        uintmax_t min   = (uintmax_t)lauxh_optuint##bit(L, 3, 0);               \
+        uint##bit##_t v = 0;                                                    \
+        lauxh_argcheck(L, min <= max, 2,                                        \
+                       "min must be less than or equal to max");                \
+        v = sfmt_genrand_uint##bit(&s->sfmt);                                   \
+        v = min + (v % (max - min + 1));                                        \
+        lua_pushinteger((L), uint2int(v));                                      \
     } while (0)
 
 static int rand64_lua(lua_State *L)
@@ -205,9 +237,9 @@ static int default_rand32_lua(lua_State *L)
 static inline void init_sfmt(lua_State *L)
 {
     int top       = lua_gettop(L);
-    lua_sfmt_t *s = luaL_checkudata(L, 1, MODULE_MT);
+    lua_sfmt_t *s = (lua_sfmt_t *)luaL_checkudata(L, 1, MODULE_MT);
 
-    s->bit = 0;
+    s->bit = RANDBIT_ZERO;
     switch (top) {
     case 2: {
         uint32_t seed = lauxh_checkuint32(L, 2);
@@ -217,7 +249,7 @@ static inline void init_sfmt(lua_State *L)
     case 1:
         // set default seeds
         {
-            struct timespec t = {0};
+            struct timespec t = {};
             clock_gettime(CLOCK_MONOTONIC, &t);
             srand(((uint64_t)t.tv_sec * 1000000000ULL + t.tv_nsec));
         }
@@ -227,8 +259,9 @@ static inline void init_sfmt(lua_State *L)
         top += 4;
 
     default: {
-        int len         = top - 1;
-        uint32_t *seeds = lua_newuserdata(L, sizeof(uint32_t) * len);
+        int len = top - 1;
+        uint32_t *seeds =
+            (uint32_t *)lua_newuserdata(L, sizeof(uint32_t) * len);
         for (int i = 2; i <= top; i++) {
             seeds[i - 2] = lauxh_checkuint32(L, i);
         }
@@ -272,6 +305,10 @@ static int idstring_lua(lua_State *L)
     lua_pushstring(L, sfmt_get_idstring(NULL));
     return 1;
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 LUALIB_API int luaopen_sfmt(lua_State *L)
 {
@@ -328,3 +365,7 @@ LUALIB_API int luaopen_sfmt(lua_State *L)
 
     return 1;
 }
+
+#ifdef __cplusplus
+}
+#endif
