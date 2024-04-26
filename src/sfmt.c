@@ -69,10 +69,7 @@ static const lua_Number LUA_SFMT_NUMMAX =
 
 static inline lua_Number dbl2num(double v)
 {
-    if (v > (double)LUA_SFMT_NUMMAX) {
-        return LUA_SFMT_NUMMAX;
-    }
-    return (lua_Number)v;
+    return (v > (double)LUA_SFMT_NUMMAX) ? LUA_SFMT_NUMMAX : (lua_Number)v;
 }
 
 #define genrand_res(L, bit)                                                    \
@@ -186,10 +183,7 @@ static const lua_Integer LUA_SFMT_INTMAX =
 
 static inline lua_Integer uint2int(uintmax_t v)
 {
-    if (v > (uintmax_t)LUA_SFMT_INTMAX) {
-        return LUA_SFMT_INTMAX;
-    }
-    return (lua_Integer)v;
+    return (v > (uintmax_t)LUA_SFMT_INTMAX) ? LUA_SFMT_INTMAX : (lua_Integer)v;
 }
 
 #define genrand_uint(L, bit)                                                    \
