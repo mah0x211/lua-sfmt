@@ -53,7 +53,12 @@ static inline lua_sfmt_t *checksfmt(lua_State *L, randbit_t bit)
         s->bit = bit;
     } else if (s->bit != bit) {
         // automatically reinitialize sfmt_t
-        uint32_t seeds[4] = {random(), random(), random(), random()};
+        uint32_t seeds[4] = {};
+        for (int i = 0; i < 4; i++) {
+            struct timespec t = {};
+            clock_gettime(CLOCK_MONOTONIC, &t);
+            seeds[i] = (uint32_t)t.tv_nsec;
+        }
         sfmt_init_by_array(&s->sfmt, seeds, 4);
     }
     return s;
@@ -248,13 +253,10 @@ static inline void init_sfmt(lua_State *L)
 
     case 1:
         // set default seeds
-        {
+        for (int i = 0; i < 4; i++) {
             struct timespec t = {};
             clock_gettime(CLOCK_MONOTONIC, &t);
-            srand(((uint64_t)t.tv_sec * 1000000000ULL + t.tv_nsec));
-        }
-        for (int i = 0; i < 4; i++) {
-            lua_pushinteger(L, random());
+            lua_pushinteger(L, t.tv_nsec);
         }
         top += 4;
 
