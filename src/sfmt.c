@@ -225,12 +225,23 @@ static inline lua_Integer uint2int(uintmax_t v)
         lua_sfmt_t *s   = checksfmt(L, RANDBIT_UINT##bit);                      \
         uintmax_t max   = (uintmax_t)lauxh_optuint##bit(L, 2, LUA_SFMT_INTMAX); \
         uintmax_t min   = (uintmax_t)lauxh_optuint##bit(L, 3, 0);               \
-        uint##bit##_t v = 0;                                                    \
+        uintmax_t range = max - min;                                            \
         lauxh_argcheck(L, min <= max, 2,                                        \
                        "min must be less than or equal to max");                \
-        v = sfmt_genrand_uint##bit(&s->sfmt);                                   \
-        v = min + (v % (max - min + 1));                                        \
-        lua_pushinteger((L), uint2int(v));                                      \
+        if (!range) {                                                           \
+            /* range == 0 means min == max */                                   \
+            lua_pushinteger((L), uint2int(min));                                \
+        } else if (range == UINT##bit##_MAX) {                                  \
+            /* range == UINT##bit##_MAX means 0..UINT##bit##_MAX */             \
+            uint##bit##_t v = sfmt_genrand_uint##bit(&s->sfmt);                 \
+            lua_pushinteger((L), uint2int(v));                                  \
+        } else {                                                                \
+            /* range < UINT##bit##_MAX means min..max */                        \
+            uint##bit##_t v =                                                   \
+                min + (sfmt_genrand_uint##bit(&s->sfmt) % (range + 1));         \
+            lua_pushinteger((L), uint2int(v));                                  \
+        }                                                                       \
+        return 1;                                                               \
     } while (0)
 
 static int rand64_lua(lua_State *L)
