@@ -50,6 +50,15 @@ function testcase.rand32()
         v = s:rand32(20, 5)
         assert(20 >= v and v >= 5)
     end
+
+    -- test that returns min value when max == min
+    assert.equal(sfmt.rand32(5, 5), 5)
+
+    -- test that returns 0 ... max
+    for _ = 1, 100 do
+        v = sfmt.rand32(5)
+        assert(0 <= v and v <= 5, v)
+    end
 end
 
 function testcase.rand64()
