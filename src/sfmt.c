@@ -21,9 +21,47 @@
  */
 
 #include "SFMT.h"
+#include <stdint.h>
 #include <time.h>
 // lua
 #include <lauxhlib.h>
+
+// fallback to CLOCK_REALTIME if CLOCK_MONOTONIC is not defined
+#ifndef CLOCK_MONOTONIC
+# define CLOCK_MONOTONIC CLOCK_REALTIME
+#endif
+
+static inline uint32_t fnv1a_mix(uint32_t x)
+{
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < 4; i++) {
+        hash ^= (x >> (i * 8)) & 0xff;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static inline void fill_seed(uint32_t *seeds, size_t n)
+{
+    for (size_t i = 0; i < n; i++) {
+        struct timespec t;
+        clock_gettime(CLOCK_MONOTONIC, &t);
+        uint32_t timepart = (uint32_t)t.tv_nsec ^ (uint32_t)t.tv_sec;
+        uint32_t ptrpart  = (uint32_t)(uintptr_t)&t;
+#if defined(__i386__)
+        uint32_t rdtsc;
+        __asm__ volatile("rdtsc" : "=a"(rdtsc)::"edx");
+#elif defined(__x86_64__)
+        uint32_t lo, hi;
+        __asm__ volatile("rdtsc" : "=a"(lo), "=d"(hi));
+        uint32_t rdtsc = lo ^ hi;
+#else
+        uint32_t rdtsc = (uint32_t)time(NULL);
+#endif
+        uint32_t raw = timepart ^ ptrpart ^ rdtsc ^ (i * 2654435761U);
+        seeds[i]     = fnv1a_mix(raw);
+    }
+}
 
 #define MODULE_MT "sfmt"
 
@@ -54,11 +92,7 @@ static inline lua_sfmt_t *checksfmt(lua_State *L, randbit_t bit)
     } else if (s->bit != bit) {
         // automatically reinitialize sfmt_t
         uint32_t seeds[4] = {};
-        for (int i = 0; i < 4; i++) {
-            struct timespec t = {};
-            clock_gettime(CLOCK_MONOTONIC, &t);
-            seeds[i] = (uint32_t)t.tv_nsec;
-        }
+        fill_seed(seeds, 4);
         sfmt_init_by_array(&s->sfmt, seeds, 4);
     }
     return s;
@@ -239,22 +273,14 @@ static inline void init_sfmt(lua_State *L)
     lua_sfmt_t *s = (lua_sfmt_t *)luaL_checkudata(L, 1, MODULE_MT);
 
     s->bit = RANDBIT_ZERO;
-    switch (top) {
-    case 2: {
+    if (top == 1) {
+        uint32_t seeds[4] = {};
+        fill_seed(seeds, 4);
+        sfmt_init_by_array(&s->sfmt, seeds, 4);
+    } else if (top == 2) {
         uint32_t seed = lauxh_checkuint32(L, 2);
         sfmt_init_gen_rand(&s->sfmt, seed);
-    } break;
-
-    case 1:
-        // set default seeds
-        for (int i = 0; i < 4; i++) {
-            struct timespec t = {};
-            clock_gettime(CLOCK_MONOTONIC, &t);
-            lua_pushinteger(L, t.tv_nsec);
-        }
-        top += 4;
-
-    default: {
+    } else {
         int len = top - 1;
         uint32_t *seeds =
             (uint32_t *)lua_newuserdata(L, sizeof(uint32_t) * len);
@@ -262,7 +288,6 @@ static inline void init_sfmt(lua_State *L)
             seeds[i - 2] = lauxh_checkuint32(L, i);
         }
         sfmt_init_by_array(&s->sfmt, seeds, len);
-    }
     }
 }
 
