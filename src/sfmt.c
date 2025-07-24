@@ -98,6 +98,33 @@ static inline lua_sfmt_t *checksfmt(lua_State *L, randbit_t bit)
     return s;
 }
 
+static int bytes_lua(lua_State *L)
+{
+    lua_sfmt_t *s = checksfmt(L, RANDBIT_UINT64);
+    size_t len    = lauxh_checkunsigned(L, 2);
+    luaL_Buffer b;
+
+    luaL_buffinit(L, &b);
+    while (len >= 8) {
+        uint64_t v = sfmt_genrand_uint64(&s->sfmt);
+        luaL_addlstring(&b, (const char *)&v, sizeof(v));
+        len -= 8;
+    }
+    if (len > 0) {
+        uint64_t v = sfmt_genrand_uint64(&s->sfmt);
+        luaL_addlstring(&b, (const char *)&v, len);
+    }
+    luaL_pushresult(&b);
+    return 1;
+}
+
+static int default_bytes_lua(lua_State *L)
+{
+    lauxh_pushref((L), DEFAULT_SFMT_REF);
+    lua_insert(L, 1);
+    return bytes_lua(L);
+}
+
 static const lua_Number LUA_SFMT_NUMMAX =
     std::numeric_limits<lua_Number>::max();
 
@@ -359,6 +386,7 @@ LUALIB_API int luaopen_sfmt(lua_State *L)
             {"real3",    real3_lua   },
             {"res53",    res53_lua   },
             {"res53mix", res53mix_lua},
+            {"bytes",    bytes_lua   },
             {NULL,       NULL        }
         };
 
@@ -393,6 +421,7 @@ LUALIB_API int luaopen_sfmt(lua_State *L)
     lauxh_pushfn2tbl(L, "real3", default_real3_lua);
     lauxh_pushfn2tbl(L, "res53", default_res53_lua);
     lauxh_pushfn2tbl(L, "res53mix", default_res53mix_lua);
+    lauxh_pushfn2tbl(L, "bytes", default_bytes_lua);
     lauxh_pushfn2tbl(L, "new", new_lua);
 
     return 1;
