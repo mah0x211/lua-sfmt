@@ -169,6 +169,19 @@ print(v) -- 0.35999271506444
 ```
 
 
+## s = sfmt.bytes( len )
+
+generates a pseudo-random byte string.
+
+**Parameters**
+
+- `len:integer`: length of the byte string.
+
+**Returns**
+
+- `s:string`: a pseudo-random byte string of the specified length.
+
+
 ## sfmt.init( [seed, ...] )
 
 initializes the default generator with an unsigned 32bit integer seed value.

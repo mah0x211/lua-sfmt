@@ -217,3 +217,26 @@ function testcase.res53mix()
     end
 end
 
+function testcase.bytes()
+    -- test that generate random bytes
+    sfmt.init(TEST_SEED)
+    local v = sfmt.bytes(10)
+    local s = assert(sfmt.new(TEST_SEED))
+    assert.equal(s:bytes(10), v)
+    assert.is_string(v)
+    assert.equal(#v, 10)
+
+    -- test that generate random bytes with length 0
+    local b = s:bytes(0)
+    assert.is_string(b)
+    assert.equal(#b, 0)
+
+    -- test that throws error if length is not a number
+    local err = assert.throws(s.bytes, s)
+    assert.re_match(err, 'bad argument.+unsigned number expected')
+
+    -- test that throws error if length is negative number
+    err = assert.throws(s.bytes, s, -1)
+    assert.re_match(err, 'bad argument.+unsigned number expected')
+end
+
